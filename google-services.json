@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "302478528291",
+    "firebase_url": "https://yufffff-todo-default-rtdb.firebaseio.com",
+    "project_id": "yufffff-todo",
+    "storage_bucket": "yufffff-todo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:302478528291:android:118268d4a92f89aa78c696",
+        "android_client_info": {
+          "package_name": "com.yufffff.taskmanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "302478528291-4h68j3o0isbv5od9l2lsov9uhdduutct.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC05FlrZZke5zTJ5Sm3qSODZXRvGVVH8CU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "302478528291-4h68j3o0isbv5od9l2lsov9uhdduutct.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

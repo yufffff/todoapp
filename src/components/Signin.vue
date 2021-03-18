@@ -24,7 +24,9 @@
 </template>
 
 <script>
-import firebase from "firebase";
+console.log("Signin.vue");
+import firebase from "firebase/app";
+import "firebase/auth";
 
 export default {
   name: "Signin",
@@ -44,7 +46,7 @@ export default {
             this.$router.push("/", () => {});
           },
           (err) => {
-            alert(err.message);
+            alert("from Siginin.vue -> " + err.message);
           }
         );
     },

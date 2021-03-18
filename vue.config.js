@@ -2,9 +2,12 @@ module.exports = {
   transpileDependencies: [
     'vuetify'
   ],
-  outputDir: 'docs',
   assetsDir: './',
-  publicPath: '/task_manager',
+  publicPath: './',
   filenameHashing: false,
-  productionSourceMap: false
+  productionSourceMap: false,
+  devServer: {
+    host: '0.0.0.0',
+    disableHostCheck: true
+  }
 }

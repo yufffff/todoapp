@@ -11,6 +11,7 @@
 </template>
 
 <script>
+console.log("App.vue")
 export default {
   name: "App",
 };

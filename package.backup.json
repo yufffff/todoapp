@@ -1,0 +1,34 @@
+{
+    "name": "task_manager",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "serve": "vue-cli-service serve",
+        "build": "vue-cli-service build",
+        "monaca:preview": "vue-cli-service serve & vue-cli-service build --dest www --no-clean --watch",
+        "monaca:transpile": "vue-cli-service build --dest www --no-clean",
+        "monaca:debug": "vue-cli-service build --dest www --no-clean --watch"
+    },
+    "dependencies": {
+        "firebase": "^8.2.9",
+        "vue": "^2.6.11",
+        "vue-router": "^3.2.0",
+        "vuedraggable": "^2.24.3",
+        "vuetify": "^2.4.0"
+    },
+    "devDependencies": {
+        "@vue/cli-plugin-router": "~4.5.0",
+        "@vue/cli-service": "~4.5.0",
+        "cordova": "^10.0.0",
+        "sass": "^1.32.0",
+        "sass-loader": "^10.0.0",
+        "vue-cli-plugin-vuetify": "~2.1.0",
+        "vue-template-compiler": "^2.6.11",
+        "vuetify-loader": "^1.7.0"
+    },
+    "browserslist": [
+        "> 1%",
+        "last 2 versions",
+        "not dead"
+    ]
+}

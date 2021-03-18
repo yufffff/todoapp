@@ -60,7 +60,6 @@
             >mdi-menu</v-icon
           >
 
-          <!-- <v-btn color="red" tile><v-icon color="white">mdi-trash-can-outline</v-icon></v-btn> -->
           <v-slide-x-reverse-transition>
             <v-btn
               color="red"
@@ -82,16 +81,16 @@
           v-on:changeListName="changeListName"
         />
 
-        <v-btn v-on:click="sortable = !sortable">
+        <v-btn v-on:click="sortable = !sortable" min-width="0">
           <span v-if="sortable != true">編集モード</span>
           <span v-if="sortable == true">並替モード</span>
           <v-icon v-if="sortable != true">mdi-wrench</v-icon>
           <v-icon v-if="sortable == true">mdi-sort</v-icon>
         </v-btn>
-        <v-btn v-on:click="deleteCheckedAll()"
+        <v-btn v-on:click="deleteCheckedAll()" min-width="0"
           ><span>チェック済</span><v-icon>mdi-delete</v-icon></v-btn
         >
-        <v-btn v-on:click="signOut()"
+        <v-btn v-on:click="signOut()" min-width="0"
           ><span>ログアウト</span><v-icon>mdi-logout</v-icon></v-btn
         >
       </v-bottom-navigation>
@@ -100,7 +99,9 @@
 </template>
 
 <script>
-import firebase from "firebase";
+console.log("TODO.vue");
+import firebase from "firebase/app";
+import "firebase/database";
 import draggable from "vuedraggable";
 import EditTODO from "@/components/EditTODO";
 import EditList from "@/components/EditList";
@@ -196,9 +197,15 @@ export default {
     },
     changeListName: function (newListName) {
       console.log("change list name");
+      let oldListName = this.selected_list;
       let dbPath = this.uid + "/" + newListName + "/items";
       this.db.ref(dbPath).set(this.items);
+      console.log(this.selected_list);
+
       this.db.ref(this.uid + "/" + this.selected_list).remove();
+      this.nav_lists.filter(function (list) {
+        return oldListName !== list;
+      });
 
       this.selected_list = newListName;
     },

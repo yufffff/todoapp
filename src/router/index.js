@@ -1,9 +1,11 @@
+console.log("index.js");
+
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import TODO from '@/components/TODO'
 import Signup from '@/components/Signup'
 import Signin from '@/components/Signin'
-import firebase from 'firebase'
+import firebase from 'firebase/app'
 
 Vue.use(VueRouter)
 

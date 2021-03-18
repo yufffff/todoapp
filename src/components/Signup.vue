@@ -24,8 +24,8 @@
 </template>
 
 <script>
-import firebase from "firebase";
-
+import firebase from "firebase/app";
+import "firebase/auth";
 export default {
   name: "Signup",
   data() {
@@ -44,7 +44,7 @@ export default {
           this.$router.replace("/signin");
         })
         .catch((error) => {
-          alert(error.message);
+          alert("from Siginup.vue -> "  + error.message);
         });
     },
   },
