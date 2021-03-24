@@ -1,4 +1,5 @@
 <template>
+  <!-- アカウント登録画面 -->
   <v-card class="mx-auto" max-width="500">
     <v-card-text>
       <v-text-field
@@ -13,7 +14,7 @@
         v-model="password"
         v-on:keyup.enter="signUp"
       ></v-text-field>
-      <v-btn large @click="signUp" class="primary">登録</v-btn>
+      <v-btn large @click="signUp" color="success">登録</v-btn>
     </v-card-text>
     <v-divider></v-divider>
     <v-card-text>
@@ -25,59 +26,31 @@
 
 <script>
 import firebase from "firebase/app";
-import "firebase/auth";
+import 'firebase/auth';
+
 export default {
   name: "Signup",
+  title: "サインアップ",
   data() {
     return {
-      username: "",
-      password: "",
+      username: "", // ユーザ名
+      password: "", // パスワード
     };
   },
   methods: {
+    // ユーザ登録
     signUp: function () {
       firebase
         .auth()
         .createUserWithEmailAndPassword(this.username, this.password)
         .then((user) => {
-          //   alert('Create account: ', user.email);
           this.$router.replace("/signin");
+          alert("アカウントが作成されました\rn" + this.username);
         })
         .catch((error) => {
-          alert("from Siginup.vue -> "  + error.message);
+          alert(error.message);
         });
     },
   },
 };
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h1,
-h2 {
-  font-weight: normal;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-.signup {
-  margin-top: 20px;
-
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
-}
-input {
-  margin: 10px 0;
-  padding: 10px;
-}
-</style>

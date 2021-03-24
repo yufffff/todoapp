@@ -1,40 +1,58 @@
 <template>
-  <v-container
-    v-on:click.prevent="
-      swiped = false;
-      eventIndex = null;
-    "
-  >
-    <v-select
-      :items="nav_lists"
-      @change="changeList"
-      v-model="selected_list"
-      label="選択中のリスト"
-      outlined
-    ></v-select>
+  <v-container v-on:click="eventIndex = null">
+    <!-- トップバー -->
+    <v-app-bar app color="primary" dark clipped-left>
+      <v-app-bar-nav-icon @click="drawer = true"></v-app-bar-nav-icon>
+      <v-toolbar-items>
+        <v-select
+          v-model="select"
+          :items="aryLists"
+          item-text="name"
+          return-object
+          label="選択中のリスト"
+          filled
+          dense
+          @change="changeIndex"
+        ></v-select>
+      </v-toolbar-items>
+    </v-app-bar>
 
-    <v-text-field
-      v-model="newItemTitle"
-      label="TODOを入力しましょう！"
-      solo
-      v-on:keyup.enter="addTodo"
-    >
+    <!-- ナビゲーションバー -->
+    <v-navigation-drawer app v-model="drawer" clipped>
+      <v-list nav dense>
+        <NewList :drawer="drawer" v-on:addList="addList" />
+        <EditList
+          :drawer="drawer"
+          :editing="select"
+          v-on:changeListName="changeListName"
+        />
+        <v-list-item v-on:click="deleteList()">
+          <v-list-item-icon
+            ><v-icon>mdi-playlist-remove</v-icon></v-list-item-icon
+          >
+          <v-list-item-title>リスト削除</v-list-item-title>
+        </v-list-item>
+      </v-list>
+
       <template v-slot:append>
-        <v-fade-transition>
-          <v-icon v-if="newItemTitle" @click="addTodo()">
-            mdi-plus-circle-outline
-          </v-icon>
-        </v-fade-transition>
+        <v-divider></v-divider>
+        <div class="pa-2">
+          <v-btn block color="error" v-on:click="signOut()">
+            <v-icon>mdi-logout</v-icon>
+            <span>ログアウト</span>
+          </v-btn>
+        </div>
       </template>
-    </v-text-field>
+    </v-navigation-drawer>
 
+    <!-- TODOリスト -->
     <draggable
-      v-model="items"
-      @change="saveTodo"
+      v-model="select.items"
+      @change="saveItems"
       handle=".sort"
       animation="200"
     >
-      <template v-for="(item, i) in items">
+      <template v-for="(item, i) in select.items">
         <v-list-item
           :key="`${i}`"
           v-touch="{
@@ -45,7 +63,7 @@
             v-model="item.isChecked"
             :label="item.title"
             :color="(item.isChecked && 'grey') || 'primary'"
-            v-on:change="saveTodo"
+            v-on:change="saveItems"
           />
           <v-spacer></v-spacer>
 
@@ -53,10 +71,10 @@
             v-if="eventIndex != `${i}` && sortable == false"
             :editing="item"
             :sortable="sortable"
-            v-on:saveTodo="saveTodo"
+            v-on:saveTodo="saveItems"
           />
 
-          <v-icon class="sort" v-if="sortable == true && swiped == false"
+          <v-icon class="sort" v-if="eventIndex != `${i}` && sortable == true"
             >mdi-menu</v-icon
           >
 
@@ -64,7 +82,7 @@
             <v-btn
               color="red"
               tile
-              v-if="!sortable && swiped && eventIndex == `${i}`"
+              v-if="swiped && eventIndex == `${i}`"
               v-on:click="deleteTodo(eventIndex)"
               ><span class="white--text">削除</span></v-btn
             >
@@ -73,154 +91,180 @@
       </template>
     </draggable>
 
-    <v-footer fixed padless app>
+    <!-- フッタ― -->
+    <v-footer app fixed padless>
+      <NewTODO v-on:addTodo="addTodo" />
       <v-bottom-navigation>
-        <NewList v-on:addList="addList" />
-        <EditList
-          :editing="selected_list"
-          v-on:changeListName="changeListName"
-        />
-
-        <v-btn v-on:click="sortable = !sortable" min-width="0">
-          <span v-if="sortable != true">編集モード</span>
-          <span v-if="sortable == true">並替モード</span>
-          <v-icon v-if="sortable != true">mdi-wrench</v-icon>
-          <v-icon v-if="sortable == true">mdi-sort</v-icon>
+        <v-btn v-on:click="sortable = !sortable">
+          <span v-if="sortable != true">並替</span>
+          <span v-if="sortable == true">編集</span>
+          <v-icon v-if="sortable == true">mdi-playlist-edit</v-icon>
+          <v-icon v-if="sortable != true">mdi-sort</v-icon>
         </v-btn>
-        <v-btn v-on:click="deleteCheckedAll()" min-width="0"
-          ><span>チェック済</span><v-icon>mdi-delete</v-icon></v-btn
-        >
-        <v-btn v-on:click="signOut()" min-width="0"
-          ><span>ログアウト</span><v-icon>mdi-logout</v-icon></v-btn
-        >
+        <v-btn v-on:click="deleteCheckedAll()">
+          <span>完了</span><v-icon>mdi-delete</v-icon>
+        </v-btn>
       </v-bottom-navigation>
     </v-footer>
   </v-container>
 </template>
 
 <script>
-console.log("TODO.vue");
 import firebase from "firebase/app";
 import "firebase/database";
 import draggable from "vuedraggable";
+import NewTODO from "@/components/NewTODO";
 import EditTODO from "@/components/EditTODO";
-import EditList from "@/components/EditList";
 import NewList from "@/components/NewList";
+import EditList from "@/components/EditList";
 
 export default {
   name: "TODO",
+  title: "メインページ",
   components: {
-    draggable,
-    EditTODO,
-    EditList,
-    NewList,
+    draggable, // 並べ替え機能用
+    NewTODO, // 新規TODO追加
+    EditTODO, // TODO編集
+    EditList, // リスト名変更
+    NewList, // 新規リスト追加
   },
   data() {
     return {
-      newItemTitle: "",
-      editing: {},
-      sortable: false,
-      swiped: false,
-      eventIndex: null,
-      uid: "",
-      db: {},
-      nav_lists: [],
-      selected_list: "",
-      items: [],
+      drawer: false,
+      sortable: true, // 並べ替えモードフラグ
+      swiped: false, // スワイプフラグ
+      index: null, // リストのインデックス
+      eventIndex: null, // TODOのインデックス
+      aryLists: [], // TODOリスト配列
+      select: {}, // 選択中のリスト
     };
   },
+  computed: {
+    // RealtimeDatabaseリファレンス
+    lists: function () {
+      const path = firebase.auth().currentUser.uid + "/lists";
+      return firebase.database().ref(path);
+    },
+    items: function () {
+      return this.lists.child(this.index).child("items");
+    },
+  },
   methods: {
+    loadLists: function () {
+      this.aryLists = [];
+      this.select = {};
+      
+      // ユーザに紐づくタスクリストを取得
+      this.lists.on("value", (data) => {
+        if (data.val()) {
+          this.aryLists = data.val();
+        }
+
+        // ユーザに紐づくタスクリストがない場合
+        if (this.aryLists.length === 0) {
+          this.aryLists.push({ name: "新規リスト" });
+          console.log("タスクリストなし");
+        }
+
+        // 選択中のリストが無い場合はリストの一番目にセット
+        if (!Object.keys(this.select).length) this.select = this.aryLists[0];
+        if (this.index == null) this.changeIndex();
+      });
+      console.log("データ取得");
+    },
+    changeIndex: function () {
+      if (!Object.keys(this.select).length) return;
+      console.log("list index: " + this.aryLists.indexOf(this.select));
+      this.index = this.aryLists.indexOf(this.select);
+    },
+    // スワイプ時イベント
     onSwipe: function (eventIndex) {
       this.swiped = false;
-      if (this.sortable) return;
       this.eventIndex = eventIndex;
       this.swiped = true;
     },
-    addTodo: function () {
-      console.log("add todo");
+    // TODO保存
+    saveItems: function () {
+      console.log("saveItems");
+      this.saveLists();
+      this.items.set(this.select.items);
+    },
+    // TODO追加
+    addTodo: function (newItemTitle) {
+      console.log("addTodo");
+      if (this.select.items == undefined) this.select.items = [];
 
-      if (this.checkItem()) {
-        this.items.push({
-          title: this.newItemTitle,
+      // 登録可能なタスク名であればリストに追加する
+      if (this.checkItem(newItemTitle)) {
+        let newItem = {
+          title: newItemTitle,
           isChecked: false,
-        });
-        console.log(this.selected_list);
-        this.saveTodo();
+        };
+        this.select.items.push(newItem);
+        this.saveItems();
       }
-      this.newItemTitle = "";
     },
+    // TODO削除
     deleteTodo: function (eventIndex) {
-      console.log("delete todo");
-      this.db.ref(this.dbPath + "/" + eventIndex).remove();
-      this.saveTodo();
+      console.log("deleteTodo");
+      this.select.items.splice(eventIndex, 1);
+      this.saveItems();
     },
+    // チェック済みのTODOをすべて削除する
     deleteCheckedAll: function () {
-      this.items = this.items.filter(function (item) {
+      console.log("deleteCheckedAll");
+      if (this.select.items == undefined) return;
+      this.select.items = this.select.items.filter(function (item) {
         return item.isChecked === false;
       });
-      this.saveTodo();
+      this.saveItems();
     },
-    loadTodo: function () {
-      console.log("loaded");
-
-      this.dbPath = this.uid + "/" + this.selected_list + "/items";
-
-      this.db.ref(this.dbPath).on("value", (data) => {
-        if (data) {
-          const rootList = data.val();
-          let list = [];
-
-          if (rootList != null) {
-            Object.keys(rootList).forEach((key) => {
-              list.push(rootList[key]);
-            });
-            this.items = list;
-          }
-        }
-      });
+    // リスト保存
+    saveLists: function () {
+      console.log("saveLists");
+      this.lists.set(this.aryLists);
     },
-    saveTodo: function () {
-      console.log("save");
-      this.db.ref(this.dbPath).set(this.items);
-    },
+    // 新規リスト追加
     addList: function (newListName) {
-      console.log("add list");
-      this.nav_lists.push(newListName);
-      this.selected_list = this.newListName;
-      this.items = [];
-      this.newlist = false;
-      this.loadTodo();
+      console.log("addList");
+      let objNewList = { name: newListName };
+      this.aryLists.push(objNewList);
+      this.select = objNewList;
+      this.changeIndex();
+      this.newlist = false; // ダイアログを閉じる
+      this.drawer = false;
+      this.saveLists();
     },
-    changeList: function () {
-      console.log("combo changed");
-      this.loadTodo();
-    },
+    // リスト名変更
     changeListName: function (newListName) {
-      console.log("change list name");
-      let oldListName = this.selected_list;
-      let dbPath = this.uid + "/" + newListName + "/items";
-      this.db.ref(dbPath).set(this.items);
-      console.log(this.selected_list);
-
-      this.db.ref(this.uid + "/" + this.selected_list).remove();
-      this.nav_lists.filter(function (list) {
-        return oldListName !== list;
-      });
-
-      this.selected_list = newListName;
+      console.log("changeListName");
+      this.lists.child(this.index).child("name").set(newListName);
+      this.drawer = false;
     },
-    checkItem: function () {
-      console.log("check item");
-
+    // リスト削除
+    deleteList: function () {
+      console.log("deleteList");
+      this.aryLists.splice(this.index, 1);
+      this.saveLists();
+      this.drawer = false;
+      this.loadLists();
+    },
+    // タスク追加時にタスク名が正しいかチェックする
+    checkItem: function (newItemTitle) {
       let result = true;
 
       try {
-        if (!this.selected_list)
+        // 選択中のリストがない場合
+        if (!Object.keys(this.select).length)
           throw new Error("保存先のリストを選択してください");
 
-        Object.keys(this.items).forEach((key) => {
-          let title = this.items[key].title;
-          if (title == this.newItemTitle)
+        // タスク名が空の場合
+        if (newItemTitle === "") throw new Error("タスク名が空っぽ！");
+
+        // タスク名が重複している場合
+        Object.keys(this.select.items).forEach((key) => {
+          let title = this.select.items[key].title;
+          if (title == newItemTitle)
             throw new Error("そのタスク名は既に存在しています");
         });
       } catch (err) {
@@ -230,11 +274,8 @@ export default {
 
       return result;
     },
+    // ログアウト
     signOut: function () {
-      if (this.isSignIn == false) return;
-
-      this.nav_lists = [];
-
       firebase
         .auth()
         .signOut()
@@ -243,37 +284,10 @@ export default {
         });
     },
   },
+  // 画面読み込み時に呼び出される
   mounted: function () {
     console.log("mounted");
-    this.db = firebase.database();
-    this.uid = firebase.auth().currentUser.uid;
-    if (this.selected_list.length == 0) {
-      this.db.ref(this.uid).on("value", (data) => {
-        if (data.val()) {
-          const rootList = data.val();
-          let list = [];
-          Object.keys(rootList).forEach((key) => {
-            list.push(key);
-          });
-          // console.log(list);
-          this.nav_lists = list;
-
-          if (this.selected_list == "") {
-            this.selected_list = this.nav_lists[0];
-            this.changeList();
-          }
-        } else {
-          console.log("no data");
-          if (this.nav_lists.length == 0) {
-            this.nav_lists.push("新規リスト");
-          }
-          if (this.selected_list == "") {
-            this.selected_list = this.nav_lists[0];
-            this.changeList();
-          }
-        }
-      });
-    }
+    this.loadLists();
   },
 };
 </script>

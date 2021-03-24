@@ -1,37 +1,30 @@
 <template>
-  <v-dialog
-    v-model="edit"
-    persistent
-    max-width="600px"
-  >
+  <!-- リスト名変更ダイアログ -->
+  <v-dialog v-model="edit" persistent max-width="600px">
     <template v-slot:activator="{ on, attrs }">
-      <v-btn v-bind="attrs" v-on="on" min-width="0">
-        <span>リスト名変更</span>
-        <v-icon>mdi-playlist-edit</v-icon>
-      </v-btn>
+      <v-list-item v-bind="attrs" v-on="on">
+        <v-list-item-icon><v-icon>mdi-playlist-edit</v-icon></v-list-item-icon>
+        <v-list-item-title>リスト名変更</v-list-item-title>
+      </v-list-item>
     </template>
     <v-card>
-      <v-card-title>
-        <span class="headline">リスト名編集</span>
-      </v-card-title>
+      <v-card-title> リスト名変更 </v-card-title>
       <v-card-text>
         <v-container>
           <v-row>
-            <v-col cols="12" sm="6" md="4">
-              <v-text-field
-                v-model="editing"
-                label="変更前のリスト名"
-                readonly
-              ></v-text-field>
-            </v-col>
+            <v-text-field
+              v-model="editing.name"
+              label="変更前のリスト名"
+              readonly
+            ></v-text-field>
           </v-row>
           <v-row>
-            <v-col cols="12" sm="6" md="4">
-              <v-text-field
-                v-model="newListName"
-                label="変更後のリスト名"
-              ></v-text-field>
-            </v-col>
+            <v-text-field
+              v-model="newListName"
+              label="変更後のリスト名"
+              v-on:keyup.enter="editList"
+              autofocus
+            ></v-text-field>
           </v-row>
         </v-container>
       </v-card-text>
@@ -49,34 +42,39 @@ export default {
   name: "EditList",
   data() {
     return {
-      edit: false,
-      newListName: "",
+      edit: false,      // ダイアログ表示フラグ
+      newListName: "",  // 変更後のリスト名
     };
   },
   props: {
-    editing: "",
+    drawer: true,
+    editing: {},  // 変更前のリスト名
   },
   methods: {
+    // 親画面のリスト名変更関数を呼び出す
     editList: function () {
       console.log("edit list");
-      if (this.editing == this.newListName) {
+      if (this.editing.name == this.newListName) {
         alert("リスト名は以前と違うものにしてください");
         return;
       }
       if (this.newListName == "") {
         alert("リスト名を入力してください");
         return;
-      } 
-      this.$emit('changeListName', this.newListName);
+      }
+      this.editing.name = this.newListName;
+      this.$emit("changeListName", this.newListName);
       this.close();
     },
-    close: function() {
+    // ダイアログクローズ
+    close: function () {
       this.newListName = "";
-      this.edit=false;
-    }
+      this.edit = false;
+    },
   },
+  // 読み込み時テキストフィールドを空にする
   mounted: function () {
     this.newListName = "";
-  }
+  },
 };
 </script>

@@ -1,4 +1,5 @@
 <template>
+  <!-- ログイン画面 -->
   <v-card class="mx-auto" max-width="500">
     <v-card-text>
       <v-text-field
@@ -13,7 +14,7 @@
         v-model="password"
         v-on:keyup.enter="signIn"
       ></v-text-field>
-      <v-btn large @click="signIn" class="primary">サインイン</v-btn>
+      <v-btn large @click="signIn" class="primary">ログイン</v-btn>
     </v-card-text>
     <v-divider></v-divider>
     <v-card-text>
@@ -24,19 +25,20 @@
 </template>
 
 <script>
-console.log("Signin.vue");
 import firebase from "firebase/app";
 import "firebase/auth";
 
 export default {
   name: "Signin",
+  title: "サインイン",
   data() {
     return {
-      username: "",
-      password: "",
+      username: "", // ユーザ名
+      password: "", // パスワード
     };
   },
   methods: {
+    // ログイン
     signIn: function () {
       firebase
         .auth()
@@ -46,41 +48,10 @@ export default {
             this.$router.push("/", () => {});
           },
           (err) => {
-            alert("from Siginin.vue -> " + err.message);
+            alert(err.message);
           }
         );
     },
   },
 };
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h1,
-h2 {
-  font-weight: normal;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-.signin {
-  margin-top: 20px;
-
-  display: flex;
-  flex-flow: column nowrap;
-  justify-content: center;
-  align-items: center;
-}
-input {
-  margin: 10px 0;
-  padding: 10px;
-}
-</style>
