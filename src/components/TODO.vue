@@ -2,7 +2,7 @@
   <v-container v-on:click="eventIndex = null">
     <!-- トップバー -->
     <v-app-bar app color="primary" dark clipped-left>
-      <v-app-bar-nav-icon @click="drawer = true"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-items>
         <v-select
           v-model="select"
@@ -18,13 +18,18 @@
     </v-app-bar>
 
     <!-- ナビゲーションバー -->
-    <v-navigation-drawer app v-model="drawer" clipped>
+    <v-navigation-drawer app v-model="drawer" clipped class="nav">
       <v-list nav dense>
-        <NewList :drawer="drawer" v-on:addList="addList" />
+        <NewList
+          :drawer="drawer"
+          :checkListName="checkListName"
+          :_addList="addList"
+        />
         <EditList
           :drawer="drawer"
           :editing="select"
-          v-on:changeListName="changeListName"
+          :checkListName="checkListName"
+          :changeListName="changeListName"
         />
         <v-list-item v-on:click="deleteList()">
           <v-list-item-icon
@@ -34,15 +39,15 @@
         </v-list-item>
       </v-list>
 
-      <template v-slot:append>
-        <v-divider></v-divider>
-        <div class="pa-2">
-          <v-btn block color="error" v-on:click="signOut()">
-            <v-icon>mdi-logout</v-icon>
-            <span>ログアウト</span>
-          </v-btn>
-        </div>
-      </template>
+      <!-- <template v-slot:append> -->
+      <v-divider></v-divider>
+      <div class="pa-2">
+        <v-btn block color="error" v-on:click="signOut()">
+          <v-icon>mdi-logout</v-icon>
+          <span>ログアウト</span>
+        </v-btn>
+      </div>
+      <!-- </template> -->
     </v-navigation-drawer>
 
     <!-- TODOリスト -->
@@ -71,7 +76,8 @@
             v-if="eventIndex != `${i}` && sortable == false"
             :editing="item"
             :sortable="sortable"
-            v-on:saveTodo="saveItems"
+            :checkItem="checkItem"
+            :saveTodo="saveItems"
           />
 
           <v-icon class="sort" v-if="eventIndex != `${i}` && sortable == true"
@@ -93,7 +99,7 @@
 
     <!-- フッタ― -->
     <v-footer app fixed padless>
-      <NewTODO v-on:addTodo="addTodo" />
+      <NewTODO :_addTodo="addTodo" :checkItem="checkItem" />
       <v-bottom-navigation>
         <v-btn v-on:click="sortable = !sortable">
           <span v-if="sortable != true">並替</span>
@@ -153,7 +159,7 @@ export default {
     loadLists: function () {
       this.aryLists = [];
       this.select = {};
-      
+
       // ユーザに紐づくタスクリストを取得
       this.lists.on("value", (data) => {
         if (data.val()) {
@@ -194,15 +200,14 @@ export default {
       console.log("addTodo");
       if (this.select.items == undefined) this.select.items = [];
 
-      // 登録可能なタスク名であればリストに追加する
-      if (this.checkItem(newItemTitle)) {
-        let newItem = {
-          title: newItemTitle,
-          isChecked: false,
-        };
-        this.select.items.push(newItem);
-        this.saveItems();
-      }
+      // 追加用オブジェクト
+      let newItem = {
+        title: newItemTitle,
+        isChecked: false,
+      };
+
+      this.select.items.push(newItem);
+      this.saveItems();
     },
     // TODO削除
     deleteTodo: function (eventIndex) {
@@ -227,13 +232,15 @@ export default {
     // 新規リスト追加
     addList: function (newListName) {
       console.log("addList");
-      let objNewList = { name: newListName };
-      this.aryLists.push(objNewList);
-      this.select = objNewList;
-      this.changeIndex();
-      this.newlist = false; // ダイアログを閉じる
-      this.drawer = false;
-      this.saveLists();
+      if (this.checkListName(newListName)) {
+        let objNewList = { name: newListName };
+        this.aryLists.push(objNewList);
+        this.select = objNewList;
+        this.changeIndex();
+        this.newlist = false; // ダイアログを閉じる
+        this.drawer = false;
+        this.saveLists();
+      }
     },
     // リスト名変更
     changeListName: function (newListName) {
@@ -241,16 +248,44 @@ export default {
       this.lists.child(this.index).child("name").set(newListName);
       this.drawer = false;
     },
+    // リスト名チェック
+    checkListName: function (listName) {
+      console.log("checkListName");
+      let result = true;
+
+      try {
+        // リスト名が空の場合
+        if (listName == "") throw new Error("リスト名が空っぽ");
+        // リスト名が重複している場合
+        Object.keys(this.aryLists).forEach((index) => {
+          let name = this.aryLists[index].name;
+          if (name == listName)
+            throw new Error("そのリスト名は既に存在しています");
+        });
+      } catch (err) {
+        result = false;
+        alert(err);
+      }
+
+      console.log("result: " + result);
+      return result;
+    },
     // リスト削除
     deleteList: function () {
       console.log("deleteList");
-      this.aryLists.splice(this.index, 1);
-      this.saveLists();
-      this.drawer = false;
-      this.loadLists();
+      let res = confirm(
+        "選択中のリストを削除します。\r\nこの操作は元に戻せません。\r\nよろしいですか？"
+      );
+      if (res == true) {
+        this.aryLists.splice(this.index, 1);
+        this.saveLists();
+        this.drawer = false;
+        this.loadLists();
+      }
     },
     // タスク追加時にタスク名が正しいかチェックする
     checkItem: function (newItemTitle) {
+      console.log("checkItem");
       let result = true;
 
       try {
@@ -262,11 +297,13 @@ export default {
         if (newItemTitle === "") throw new Error("タスク名が空っぽ！");
 
         // タスク名が重複している場合
-        Object.keys(this.select.items).forEach((key) => {
-          let title = this.select.items[key].title;
-          if (title == newItemTitle)
-            throw new Error("そのタスク名は既に存在しています");
-        });
+        if (this.select.items) {
+          Object.keys(this.select.items).forEach((key) => {
+            let title = this.select.items[key].title;
+            if (title == newItemTitle)
+              throw new Error("そのタスク名は既に存在しています");
+          });
+        }
       } catch (err) {
         result = false;
         alert(err);
@@ -276,12 +313,15 @@ export default {
     },
     // ログアウト
     signOut: function () {
-      firebase
-        .auth()
-        .signOut()
-        .then(() => {
-          this.$router.push("/signin", () => {});
-        });
+      let res = confirm("ログアウトします。\r\nよろしいですか？");
+      if (res == true) {
+        firebase
+          .auth()
+          .signOut()
+          .then(() => {
+            this.$router.push("/signin", () => {});
+          });
+      }
     },
   },
   // 画面読み込み時に呼び出される
@@ -291,3 +331,10 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.nav {
+  /* align-items: flex-start; */
+  -webkit-overflow-scrolling: auto;
+}
+</style>
